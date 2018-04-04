@@ -73,8 +73,8 @@ bncMapWin::bncMapWin(QWidget* parent) : QDialog(parent) {
   QString proxyHost = settings.value("proxyHost").toString();
   int     proxyPort = settings.value("proxyPort").toInt();
   if (!proxyHost.isEmpty()) {
-    QNetworkProxy proxy(QNetworkProxy::HttpProxy, proxyHost, proxyPort);
-    _webView->page()->networkAccessManager()->setProxy(proxy);
+//    QNetworkProxy proxy(QNetworkProxy::HttpProxy, proxyHost, proxyPort);
+//    _webView->page()->networkAccessManager()->setProxy(proxy);
   }
 
   loadHtmlPage();
@@ -140,7 +140,11 @@ void bncMapWin::slotInitMap(bool isOk) {
     mapWinDotColor = 2;
   }
   QString location = QString("%1, %2, %3, %4").arg(_currLat,0,'f',8).arg(_currLon,0,'f',8).arg(mapWinDotSize).arg(mapWinDotColor);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
+  _webView->page()->runJavaScript(QString("gotoLocation( %1 )").arg(location));
+#else
   _webView->page()->mainFrame()->evaluateJavaScript(QString("initialize( %1 )").arg(location));
+#endif
 }
 
 //
@@ -167,7 +171,11 @@ void bncMapWin::gotoLocation(double lat, double lon) {
   _statusLabel->setText(lblStr);
 
   QString location = QString("%1, %2").arg(_currLat,0,'f',8).arg(_currLon,0,'f',8);
-  _webView->page()->mainFrame()->evaluateJavaScript(QString("gotoLocation( %1 )").arg(location));
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
+  _webView->page()->runJavaScript(QString("gotoLocation( %1 )").arg(location));
+#else
+  _webView->page()->mainFrame()->evaluateJavaScript(QString("initialize( %1 )").arg(location));
+#endif
 }
 
 //
