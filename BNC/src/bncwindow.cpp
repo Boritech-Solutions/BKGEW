@@ -642,6 +642,10 @@ bncWindow::bncWindow() {
   else {
     enableWidget(false, _uploadSamplRtcmEphSpinBox);
   }
+  // Earthworm Configuration
+  // ---------------------------
+  _earthwormConfig = new QLineEdit();
+  _earthwormRun    = new QCheckBox("Check for enableing.");
 
   // Canvas with Editable Fields
   // ---------------------------
@@ -669,6 +673,7 @@ bncWindow::bncWindow() {
   QWidget* cmbgroup = new QWidget();
   QWidget* uploadgroup = new QWidget();
   QWidget* uploadEphgroup = new QWidget();
+  QWidget* ewconfiggroup = new QWidget();
   _aogroup->addTab(pgroup,tr("Network"));
   _aogroup->addTab(ggroup,tr("General"));
   _aogroup->addTab(ogroup,tr("RINEX Observations"));
@@ -687,6 +692,7 @@ bncWindow::bncWindow() {
   _aogroup->addTab(cmbgroup,tr("Combine Corrections"));
   _aogroup->addTab(uploadgroup,tr("Upload Corrections"));
   _aogroup->addTab(uploadEphgroup,tr("Upload Ephemeris"));
+  _aogroup->addTab(ewconfiggroup,tr("Earthworm Configuration"));
 
   // Log Tab
   // -------
@@ -1272,6 +1278,25 @@ bncWindow::bncWindow() {
 
   uploadEphgroup->setLayout(uploadLayoutEph);
 
+  // Earthworm Config Tab
+  // ----------------------------
+  QGridLayout* ewLayout = new QGridLayout;
+  ewLayout->setColumnMinimumWidth(0,13*ww);
+  _proxyPortLineEdit->setMaximumWidth(9*ww);
+  _earthwormConfig->setText(settings.value("ewConfigFile").toString());
+
+  ewLayout->addWidget(new QLabel("Settings for earthworm configuration     "),0, 0, 1, 50);
+  ewLayout->addWidget(new QLabel("Earthworm Configuration File"),             1, 0);
+  ewLayout->addWidget(_earthwormConfig,                                       1, 1, 1,10);
+  ewLayout->addWidget(new QLabel("Run Earthworm Module?"),                    2, 0);
+  ewLayout->addWidget(_earthwormRun,                                          2, 1, 1,10);
+  ewLayout->addWidget(new QLabel(""),                                         3, 1);
+  ewLayout->setRowStretch(4, 999);
+
+  ewconfiggroup->setLayout(ewLayout);
+  connect(_earthwormRun,SIGNAL(toggled(bool)),BNC_CORE,SLOT(slotConnectEW(bool)));
+  connect(_earthwormConfig,SIGNAL(textChanged(QString)),BNC_CORE,SLOT(slotSetEWConfig(QString)));
+
 
   // Main Layout
   // -----------
@@ -1574,6 +1599,8 @@ bncWindow::~bncWindow() {
   delete _sp3CompFileChooser;
   delete _sp3CompExclude;
   delete _sp3CompLogLineEdit;
+  delete _earthwormConfig;
+  delete _earthwormRun;
   //delete _canvas;
 }
 
@@ -2053,6 +2080,8 @@ void bncWindow::saveOptions() {
   }
   settings.setValue("uploadSamplRtcmEph", _uploadSamplRtcmEphSpinBox->value());
 
+  settings.setValue("ewConfigFile", _earthwormConfig->text());
+
   if (_caster) {
     _caster->readMountPoints();
   }
@@ -2073,6 +2102,7 @@ void bncWindow::slotGetThreadsFinished() {
 ////////////////////////////////////////////////////////////////////////////
 void bncWindow::slotStart() {
   saveOptions();
+  BNC_CORE->slotSetEWConfig(_earthwormConfig->text());
   if      ( _pppWidgets._dataSource->currentText() == "RINEX Files") {
     _runningPPP = true;
     enableStartStop();
