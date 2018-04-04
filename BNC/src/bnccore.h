@@ -29,6 +29,7 @@
 #include "bnccaster.h"
 #include "bncrawfile.h"
 #include "bncephuser.h"
+#include "ewconn.h"
 
 class bncComb;
 class bncTableItem;
@@ -56,6 +57,7 @@ friend class bncSettings;
   QDateTime         dateAndTimeGPS() const;
   void              setDateAndTimeGPS(QDateTime dateTime);
   void              setConfFileName(const QString& confFileName);
+  void              setPid(qint64 mypid);
   QString           confFileName() const {return _confFileName;}
   void              writeRawData(const QByteArray& data, const QByteArray& staID,
                                 const QByteArray& format);
@@ -84,6 +86,8 @@ friend class bncSettings;
   void slotNewCodeBiases(QList<t_satCodeBias>);
   void slotNewPhaseBiases(QList<t_satPhaseBias>);
   void slotNewTec(t_vTec);
+  void slotConnectEW(bool status);
+  void slotSetEWConfig(QString config);
   void slotQuit();
 
  signals:
@@ -155,6 +159,9 @@ friend class bncSettings;
   mutable QMutex         _mutexDateAndTimeGPS;
   BNC_PPP::t_pppMain*    _pppMain;
   bncEphUser             _ephUser;
+  qint64                 _pid;
+  EWconn*                _earthworm;
+  QString                _ewConfig;
 };
 
 #define BNC_CORE (t_bncCore::instance())

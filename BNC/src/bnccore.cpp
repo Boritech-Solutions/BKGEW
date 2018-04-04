@@ -119,6 +119,8 @@ t_bncCore::t_bncCore() : _ephUser(false) {
   qRegisterMetaType<QList<t_satCodeBias> >  ("QList<t_satCodeBias>");
   qRegisterMetaType<QList<t_satPhaseBias> > ("QList<t_satPhaseBias>");
   qRegisterMetaType<t_vTec>                 ("t_vTec");
+
+  _earthworm = new EWconn(this);
 }
 
 // Destructor
@@ -693,6 +695,32 @@ void t_bncCore::slotNewTec(t_vTec vTec) {
   }
 }
 
+void t_bncCore::slotConnectEW(bool status)
+{
+    _earthworm->setConfig(_ewConfig);
+    _earthworm->setPid(_pid);
+    if(status && !_earthworm->isConn()){
+        if(_earthworm->connectToEw()!=-1){
+            connect(this,SIGNAL(newPosition(QByteArray,bncTime,QVector<double>)),
+                    _earthworm,SLOT(processState(QByteArray,bncTime,QVector<double>)));
+            qDebug() << "Connected Succesfully";
+        }
+        else{
+            qDebug() << "Error connecting to EW";
+        }
+    }
+    else if (!status && _earthworm->isConn()){
+        disconnect(BNC_CORE,SIGNAL(newPosition(QByteArray,bncTime,QVector<double>)),
+                   _earthworm,SLOT(processState(QByteArray,bncTime,QVector<double>)));
+        _earthworm->disconnectFromEw();
+    }
+}
+
+void t_bncCore::slotSetEWConfig(QString config)
+{
+    _ewConfig = config;
+}
+
 //
 ////////////////////////////////////////////////////////////////////////////
 void t_bncCore::setConfFileName(const QString& confFileName) {
@@ -705,6 +733,11 @@ void t_bncCore::setConfFileName(const QString& confFileName) {
   else {
     _confFileName = confFileName;
   }
+}
+
+void t_bncCore::setPid(qint64 mypid)
+{
+    _pid = mypid;
 }
 
 // Raw Output
